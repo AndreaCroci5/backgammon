@@ -87,10 +87,71 @@ public class Circuit {
                     break;
                 default:
                     boardCircuit.put(i, 0);
-                    boardCircuitStatus.put(i, PositionStatus.PLAYER_1);
+                    boardCircuitStatus.put(i, PositionStatus.FREE);
                     break;
             }
         }
     }
+
+
+    //Dice move-set
+    public int rollTheDice() {
+        Random random = new Random();
+        return random.nextInt(6) + 1;
+    }
+
+
+    public int dicePositionTranslator(PositionStatus player, int dice, int counterPosition) {
+        if (player == PositionStatus.PLAYER_1)
+            return counterPosition + dice;
+        else
+            return counterPosition - dice;
+    }
+
+
+    //Counters move-set
+
+    public void moveCounter (PositionStatus player, int desiredPosition, int counterPosition) throws MoveException {
+        //Exception check for circuitBoards bound
+        if ((desiredPosition >= 24 || desiredPosition < 0) && (counterPosition >= 24 || counterPosition < 0)) {
+            throw new MoveException();
+        }
+
+        //Counter chosen presence check
+        if (this.boardCircuitAmount.get(counterPosition) != 0) {
+            //Legal move check by checking on the counter picked and on the desired move
+            if (checkCounterPresence(player, counterPosition) && checkCounterMove(player, desiredPosition)) {
+                //Adjustment on initial position movement by reducing the total count of checkers in that position
+                int startingPositionAmount = this.boardCircuitAmount.get(counterPosition) - 1;
+                this.boardCircuitAmount.put(counterPosition, startingPositionAmount);
+                if (startingPositionAmount == 0)
+                    this.boardCircuitStatus.put(counterPosition, PositionStatus.FREE);
+                //Adjustment on final position (destination/desired) by adding the total count of checkers in that position
+                int destinationPositionAmount = this.boardCircuitAmount.get(desiredPosition) + 1;
+                this.boardCircuitAmount.put(desiredPosition, destinationPositionAmount);
+                if (this.boardCircuitStatus.get(desiredPosition) == PositionStatus.FREE)
+                    this.boardCircuitStatus.put(desiredPosition, player);
+            } else {
+                throw new MoveException();
+            }
+        } else {
+            throw new MoveException();
+        }
+
+    }
+
+    public boolean checkCounterPresence(PositionStatus player, int counterPosition) {
+        int checkersInAPosition = this.boardCircuitAmount.get(counterPosition);
+        PositionStatus positionStatus = this.boardCircuitStatus.get(counterPosition);
+
+        return checkersInAPosition != 0 && positionStatus == player;
+    }
+
+    public boolean checkCounterMove (PositionStatus player, int desiredPosition) {
+        PositionStatus positionStatus = this.boardCircuitStatus.get(desiredPosition);
+
+        return positionStatus == PositionStatus.FREE || positionStatus == player;
+    }
+
 
 }
